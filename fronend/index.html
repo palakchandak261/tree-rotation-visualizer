@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tree Rotation Visualizer</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+
+<h1>Tree Rotation Visualizer (BST vs AVL)</h1>
+
+<div class="controls">
+  <input type="number" id="value" placeholder="Enter value" />
+  <button onclick="insert()">Insert</button>
+  <button onclick="resetTrees()">Reset</button>
+</div>
+
+<div class="trees">
+  <div>
+    <h2>BST</h2>
+    <svg id="bstTree"></svg>
+  </div>
+
+  <div>
+    <h2>AVL</h2>
+    <svg id="avlTree"></svg>
+  </div> 
+  <div>
+    <h2>Red Black </h2>
+    <svg id="rbTree"></svg>
+  </div> 
+</div>
+
+<div class="steps">
+  <button onclick="prevStep()">◀ Prev</button>
+  <span id="stepInfo">Step 0</span>
+  <button onclick="nextStep()">Next ▶</button>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

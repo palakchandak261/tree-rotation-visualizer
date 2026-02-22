@@ -1,0 +1,104 @@
+body {
+  background: #020617;
+  color: #e5e7eb;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.controls {
+  margin: 15px;
+}
+
+input {
+  padding: 8px;
+  width: 120px;
+}
+
+button {
+  padding: 8px 14px;
+  margin: 5px;
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+.trees {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+svg {
+  width: 420px;
+  height: 320px;
+  background: #020617;
+  border: 1px solid #334155;
+  border-radius: 6px;
+}
+
+/* EDGES */
+line {
+  stroke: #94a3b8;
+  stroke-width: 2;
+  transition: all 0.6s ease;
+}
+
+/* NODES */
+circle {
+  fill: #38bdf8;
+  transition: all 0.6s ease;
+}
+
+/* TEXT */
+text {
+  fill: white;
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.steps {
+  margin-top: 15px;
+}
+circle.rotated {
+  fill: #facc15;       /* yellow */
+  stroke: #f97316;    /* orange */
+  stroke-width: 3;
+}
+
+.rotation-arrow {
+  animation: fadeArrow 1s ease;
+}
+
+@keyframes fadeArrow {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.rotation-arrow {
+  transition: transform 3s ease-in-out;
+}
+
+svg circle {
+  fill: radial-gradient(circle at top left, #7dd3fc, #0284c7) !important;
+}
+
+svg line {
+  stroke: #94a3b8 !important;
+}
+
+svg {
+  background: #020617 !important;
+}
+
+.balance-text {
+  fill: #22c55e;
+  font-size: 12px;
+  font-weight: bold;
+}
