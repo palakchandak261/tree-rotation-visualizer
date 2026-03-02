@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>(M, L) B+ Tree Visualizer</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #38bdf8;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            margin: 15px;
+        }
+
+        input {
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            width: 120px;
+            margin-left: 5px;
+            margin-right: 15px;
+        }
+
+        button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #38bdf8;
+            color: black;
+            font-weight: bold;
+            margin-left: 5px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #0ea5e9;
+        }
+
+        svg {
+            background: #1e293b;
+            border-radius: 10px;
+            margin-top: 20px;
+            height: 450px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+        }
+
+        .modal-content {
+            background: #111827;
+            margin: 5% auto;
+            padding: 30px;
+            width: 70%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            text-align: left;
+        }
+
+        .modal-content h2 {
+            text-align: center;
+            color: #38bdf8;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: #374151;
+            padding: 8px 15px;
+            border-radius: 6px;
+            color: white;
+        }
+
+        .tab-btn.active {
+            background: #38bdf8;
+            color: black;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .close-btn {
+            float: right;
+            font-size: 25px;
+            cursor: pointer;
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🌿 (M, L) B+ Tree Visualizer</h1>
+
+<!-- ===== Degree Controls ===== -->
+<div class="controls">
+    <label>Internal Degree (M):</label>
+    <input type="number" id="internalDegree" min="3" placeholder="Min 3">
+
+    <label>Leaf Degree (L):</label>
+    <input type="number" id="leafDegree" min="2" placeholder="Min 2">
+
+    <button onclick="createTree()">Create Tree</button>
+</div>
+
+<!-- ===== Insert Controls ===== -->
+<div class="controls">
+    <label>Value:</label>
+    <input type="number" id="value" placeholder="Enter value">
+    <button onclick="insert()">Insert</button>
+    <button onclick="openInfo()">📘 Learn B+ Tree</button>
+</div>
+
+<!-- ===== SVG Canvas ===== -->
+<svg id="tree" width="1200" height="600"></svg>
+
+<br><br>
+<button onclick="goBack()">⬅ Back to Main</button>
+
+<!-- ===== LEARNING MODAL ===== -->
+
+<div id="bplusInfoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeInfo()">×</span>
+        <h2>B+ Tree Complete Guide</h2>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab(event,'basic')">Basics</button>
+            <button class="tab-btn" onclick="showTab(event,'advanced')">Advanced</button>
+            <button class="tab-btn" onclick="showTab(event,'complexity')">Complexity</button>
+            <button class="tab-btn" onclick="showTab(event,'applications')">Applications</button>
+        </div>
+
+        <div id="basic" class="tab-content active">
+            <h3>What is a B+ Tree?</h3>
+            <p>A B+ Tree is a self-balancing tree used in database indexing.</p>
+            <ul>
+                <li>All records stored in leaf nodes</li>
+                <li>Internal nodes store only keys</li>
+                <li>Leaves are linked for range queries</li>
+            </ul>
+        </div>
+
+        <div id="advanced" class="tab-content">
+            <h3>Insertion Process</h3>
+            <ul>
+                <li>Find correct leaf</li>
+                <li>Insert value in sorted order</li>
+                <li>If overflow → split leaf</li>
+                <li>Promote first key of new leaf</li>
+                <li>If internal overflow → split internal</li>
+            </ul>
+        </div>
+
+        <div id="complexity" class="tab-content">
+            <h3>Time Complexity</h3>
+            <ul>
+                <li>Search → O(log n)</li>
+                <li>Insert → O(log n)</li>
+                <li>Delete → O(log n)</li>
+                <li>Range Query → Very Efficient</li>
+            </ul>
+        </div>
+
+        <div id="applications" class="tab-content">
+            <h3>Real World Applications</h3>
+            <ul>
+                <li>Database indexing (MySQL, Oracle)</li>
+                <li>File systems</li>
+                <li>Search engines</li>
+                <li>Distributed storage systems</li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+<script src="bplus.js"></script>
+
+<script>
+function goBack() {
+    window.location.href = "index.html";
+}
+
+function openInfo() {
+    document.getElementById("bplusInfoModal").style.display = "block";
+}
+
+function closeInfo() {
+    document.getElementById("bplusInfoModal").style.display = "none";
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById("bplusInfoModal");
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+}
+
+function showTab(event, tabId) {
+    const tabs = document.querySelectorAll(".tab-content");
+    const buttons = document.querySelectorAll(".tab-btn");
+
+    tabs.forEach(tab => tab.classList.remove("active"));
+    buttons.forEach(btn => btn.classList.remove("active"));
+
+    document.getElementById(tabId).classList.add("active");
+    event.target.classList.add("active");
+}
+</script>
+
+</body>
+</html>

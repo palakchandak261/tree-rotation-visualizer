@@ -3,15 +3,20 @@ body {
   color: #e5e7eb;
   font-family: Arial, sans-serif;
   text-align: center;
+  margin: 0;
 }
 
 .controls {
-  margin: 15px;
+  margin: 20px;
 }
 
 input {
   padding: 8px;
-  width: 120px;
+  width: 140px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: white;
 }
 
 button {
@@ -21,7 +26,8 @@ button {
   background: #2563eb;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
+  transition: 0.2s ease;
 }
 
 button:hover {
@@ -31,74 +37,190 @@ button:hover {
 .trees {
   display: flex;
   justify-content: space-around;
-  margin-top: 20px;
+  margin-top: 25px;
+  margin-bottom: 100px;
 }
+
+
 
 svg {
-  width: 420px;
-  height: 320px;
-  background: #020617;
+  width: 450px;
+  height: 420px;
+  background: #182543;
   border: 1px solid #334155;
-  border-radius: 6px;
+  border-radius: 10px;
+  margin-bottom: 20px;
 }
 
-/* EDGES */
 line {
-  stroke: #94a3b8;
+  stroke: #64748b;
   stroke-width: 2;
-  transition: all 0.6s ease;
 }
 
-/* NODES */
-circle {
-  fill: #38bdf8;
-  transition: all 0.6s ease;
-}
-
-/* TEXT */
 text {
-  fill: white;
+  fill: rgb(255, 255, 255);
   font-size: 14px;
   font-weight: bold;
   pointer-events: none;
-}
-
-.steps {
-  margin-top: 15px;
-}
-circle.rotated {
-  fill: #facc15;       /* yellow */
-  stroke: #f97316;    /* orange */
-  stroke-width: 3;
-}
-
-.rotation-arrow {
-  animation: fadeArrow 1s ease;
-}
-
-@keyframes fadeArrow {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.rotation-arrow {
-  transition: transform 3s ease-in-out;
-}
-
-svg circle {
-  fill: radial-gradient(circle at top left, #7dd3fc, #0284c7) !important;
-}
-
-svg line {
-  stroke: #94a3b8 !important;
-}
-
-svg {
-  background: #020617 !important;
 }
 
 .balance-text {
   fill: #22c55e;
   font-size: 12px;
   font-weight: bold;
+}
+
+.steps {
+  margin-top: 20px;
+}
+
+#stepInfo {
+  font-weight: 500;
+}
+
+.tree-section {
+  text-align: center;
+}
+
+.tree-section button {
+  margin-top: 10px;
+  background: #7c3aed;
+}
+
+.tree-section button:hover {
+  background: #6d28d9;
+}
+
+.info-panel {
+  margin: 30px auto;
+  padding: 20px;
+  width: 60%;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  display: none;
+  text-align: left;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+.info-panel h3 {
+  color: #38bdf8;
+}
+
+.info-panel ul {
+  padding-left: 20px;
+}
+
+.extra-menu {
+  text-align: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.extra-menu button {
+  background: #9333ea;
+}
+
+.dropdown {
+  display: none;
+  margin-top: 10px;
+}
+
+.dropdown button {
+  display: block;
+  margin: 5px auto;
+  width: 200px;
+  background: #7c3aed;
+}
+
+/* STATS BUTTON */
+.stats-toggle {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.stats-toggle button {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.stats-toggle button:hover {
+    transform: scale(1.05);
+}
+
+/* OVERLAY */
+.stats-overlay {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    height: 60%;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(15px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: bottom 0.5s ease;
+    z-index: 1000;
+}
+
+/* ACTIVE STATE */
+.stats-overlay.active {
+    bottom: 0;
+}
+
+/* PANEL */
+.stats-panel {
+    width: 80%;
+    background: #0f172a;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.stats-header h3 {
+    color: white;
+}
+
+.stats-header button {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    color: white;
+    cursor: pointer;
+}
+
+.rotation-badge {
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-weight: 600;
+  min-width: 120px;
+  text-align: center;
+  transition: 0.3s ease;
+}
+
+/* AVL */
+#avlRotationInfo {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+/* RB */
+#rbRotationInfo {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
 }

@@ -7,36 +7,72 @@
 </head>
 <body>
 
-<h1>Tree Rotation Visualizer (BST vs AVL)</h1>
+<h1>Tree Rotation Visualizer (BST vs AVL vs Red Black)</h1>
 
 <div class="controls">
   <input type="number" id="value" placeholder="Enter value" />
-  <button onclick="insert()">Insert</button>
-  <button onclick="resetTrees()">Reset</button>
+
+  <button type="button" onclick="insert()">Insert</button>
+
+  <button type="button" onclick="resetTrees()">Reset</button>
+</div>
+<div id="avlRotationInfo" class="rotation-badge"></div>
+<div id="rbRotationInfo" class="rotation-badge"></div>
+
+<div class="extra-menu" style="margin-bottom: 50px;">
+    <button type="button" onclick="toggleMenu()">More Trees ▾</button>
+
+    <div id="treeOptions" class="dropdown">
+        <button type="button" onclick="openTree('btree.html')">B-Tree</button>
+        <button type="button" onclick="openTree('bplustree.html')">B+ Tree</button>
+    </div>
 </div>
 
-<div class="trees">
-  <div>
+<div class="trees" style="margin-top: -40px;">
+   
+  <div class="tree-section">
     <h2>BST</h2>
     <svg id="bstTree"></svg>
+    <button type="button" onclick="showInfo('bst')">View Info</button>
   </div>
 
-  <div>
+  <div class="tree-section">
     <h2>AVL</h2>
     <svg id="avlTree"></svg>
-  </div> 
-  <div>
-    <h2>Red Black </h2>
+    <button type="button" onclick="showInfo('avl')">View Info</button>
+  </div>
+
+  <div class="tree-section">
+    <h2>Red Black</h2>
     <svg id="rbTree"></svg>
-  </div> 
+    <button type="button" onclick="showInfo('rb')">View Info</button>
+  </div>
+
 </div>
 
-<div class="steps">
-  <button onclick="prevStep()">◀ Prev</button>
+
+<!-- Info Panel -->
+<div id="infoPanel" class="info-panel"></div>
+
+<div class="steps" style="margin-top: -80px;">
+  <!-- ✅ FIXED: Added type="button" -->
+  <button type="button" onclick="prevStep()">◀ Prev</button>
   <span id="stepInfo">Step 0</span>
-  <button onclick="nextStep()">Next ▶</button>
+  <button type="button" onclick="nextStep()">Next ▶</button>
 </div>
 
+<div style="text-align:center; margin-top:20px;">
+    <button type="button" onclick="toggleStatsPanel()">
+        📊 Show Statistical Comparison
+    </button>
+</div>
+
+<div id="statsContainer" style="width:80%; margin:30px auto; display:none;">
+    <canvas id="statsChart"></canvas>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

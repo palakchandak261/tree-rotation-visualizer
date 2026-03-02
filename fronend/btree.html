@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>B-Tree Visualizer</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #10b981;
+        }
+
+        .controls {
+            margin: 15px;
+        }
+
+        input {
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            width: 150px;
+        }
+
+        button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #10b981;
+            color: white;
+            font-weight: bold;
+            margin-left: 5px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #059669;
+        }
+
+        svg {
+            background: #1e293b;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        /* ===== Animation ===== */
+
+        @keyframes pulse {
+            0% { fill: #10b981; }
+            50% { fill: #f59e0b; }
+            100% { fill: #10b981; }
+        }
+
+        .split-highlight {
+            animation: pulse 0.6s ease-in-out 2;
+        }
+
+        /* ===== MODAL STYLE ===== */
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+        }
+
+        .modal-content {
+            background: #111827;
+            margin: 5% auto;
+            padding: 30px;
+            width: 70%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            text-align: left;
+        }
+
+        .modal-content h2 {
+            text-align: center;
+            color: #10b981;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: #374151;
+            padding: 8px 15px;
+            border-radius: 6px;
+        }
+
+        .tab-btn.active {
+            background: #10b981;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .close-btn {
+            float: right;
+            font-size: 25px;
+            cursor: pointer;
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🌳 B-Tree Visualizer</h1>
+
+<div class="controls">
+    <label>Order (m):</label>
+    <input type="number" id="order" min="3" placeholder="Enter order">
+    <button onclick="createTree()">Create Tree</button>
+</div>
+
+<div class="controls">
+    <label>Value:</label>
+    <input type="number" id="value" placeholder="Enter value">
+    <button onclick="insert()">Insert</button>
+    <button onclick="openInfo()">📘 Learn B-Tree</button>
+</div>
+
+<svg id="tree" width="1200" height="600" style="height: 400px;"></svg>
+
+<br><br>
+<button onclick="goBack()">⬅ Back to Main</button>
+
+<!-- ===== LEARNING MODAL ===== -->
+
+<div id="btreeInfoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeInfo()">×</span>
+        <h2>B-Tree Complete Guide</h2>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('basic')">Basics</button>
+            <button class="tab-btn" onclick="showTab('advanced')">Advanced</button>
+            <button class="tab-btn" onclick="showTab('complexity')">Complexity</button>
+            <button class="tab-btn" onclick="showTab('applications')">Applications</button>
+        </div>
+
+        <div id="basic" class="tab-content active">
+            <h3>What is a B-Tree?</h3>
+            <p>A B-Tree is a self-balancing multi-way search tree used in databases and file systems.</p>
+            <ul>
+                <li>All leaves are at same level</li>
+                <li>Nodes contain multiple keys</li>
+                <li>Keys are sorted</li>
+            </ul>
+        </div>
+
+        <div id="advanced" class="tab-content">
+            <h3>Insertion & Split</h3>
+            <ul>
+                <li>Insert into correct leaf</li>
+                <li>If overflow → split node</li>
+                <li>Middle key moves to parent</li>
+                <li>Root split increases height</li>
+            </ul>
+
+            <h3>Deletion</h3>
+            <ul>
+                <li>Remove from leaf</li>
+                <li>Borrow from sibling if needed</li>
+                <li>Merge if underflow</li>
+            </ul>
+        </div>
+
+        <div id="complexity" class="tab-content">
+            <h3>Time Complexity</h3>
+            <ul>
+                <li>Search → O(log n)</li>
+                <li>Insert → O(log n)</li>
+                <li>Delete → O(log n)</li>
+            </ul>
+        </div>
+
+        <div id="applications" class="tab-content">
+            <h3>Real World Usage</h3>
+            <ul>
+                <li>Database Indexing (MySQL, PostgreSQL)</li>
+                <li>File Systems (NTFS, EXT4)</li>
+                <li>Large storage systems</li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+<script src="btree.js"></script>
+
+<script>
+function goBack() {
+    window.location.href = "index.html";
+}
+
+function openInfo() {
+    document.getElementById("btreeInfoModal").style.display = "block";
+}
+
+function closeInfo() {
+    document.getElementById("btreeInfoModal").style.display = "none";
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById("btreeInfoModal");
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+}
+
+function showTab(tabId) {
+    const tabs = document.querySelectorAll(".tab-content");
+    const buttons = document.querySelectorAll(".tab-btn");
+
+    tabs.forEach(tab => tab.classList.remove("active"));
+    buttons.forEach(btn => btn.classList.remove("active"));
+
+    document.getElementById(tabId).classList.add("active");
+    event.target.classList.add("active");
+}
+</script>
+
+</body>
+</html>

@@ -7,6 +7,16 @@ const rbSVG = document.getElementById("rbTree");
 
 const stepInfo = document.getElementById("stepInfo");
 let rbRecoloredNodes = new Set();
+/**********************
+ * STATISTICS TRACKING
+ **********************/
+
+let avlRotationCount = 0;
+let rbRotationCount = 0;
+let rbRecolorCount = 0;
+let statsChart = null;
+let bstRotationCount = 0;
+
 
 
 /**********************
@@ -76,7 +86,7 @@ class RBNode {
     this.left = null;
     this.right = null;
     this.parent = null;
-    this.color = "red"; // new nodes always red
+    this.color = "red"; 
   }
 }
 let rbRoot = null;
@@ -103,11 +113,13 @@ function balance(n) { return n ? height(n.left) - height(n.right) : 0; }
  **********************/
 let currentRotation = "";
 let currentRotatedNodes = new Set();
+let currentRBRotation = "";
 
 /**********************
  * AVL ROTATIONS
  **********************/
 function rotateRight(y) {
+  avlRotationCount++;
   const x = y.left;
   const T2 = x.right;
 
@@ -124,6 +136,7 @@ function rotateRight(y) {
 }
 
 function rotateLeft(x) {
+  avlRotationCount++;
   const y = x.right;
   const T2 = y.left;
 
@@ -141,6 +154,7 @@ function rotateLeft(x) {
 
 
 function rotateLeftRB(x) {
+  rbRotationCount++;
   const y = x.right;
   x.right = y.left;
 
@@ -157,6 +171,7 @@ function rotateLeftRB(x) {
 }
 
 function rotateRightRB(x) {
+  rbRotationCount++;
   const y = x.left;
   x.left = y.right;
 
@@ -241,43 +256,47 @@ function insertRB(value) {
 
 
 function fixRBInsert(node) {
-  while (node !== rbRoot && node.parent.color === "red") {
+  while (node !== rbRoot && node.parent && node.parent.color === "red") {
 
     const parent = node.parent;
     const grandparent = parent.parent;
+    if (!grandparent) break;
 
     if (parent === grandparent.left) {
       const uncle = grandparent.right;
 
-      // 🔴 CASE 1: Recoloring
       if (uncle && uncle.color === "red") {
         parent.color = "black";
         uncle.color = "black";
         grandparent.color = "red";
 
+        rbRecolorCount += 3;
         rbRecoloredNodes.add(parent.value);
         rbRecoloredNodes.add(uncle.value);
         rbRecoloredNodes.add(grandparent.value);
 
         node = grandparent;
-      } 
-      else {
-        // 🔁 CASE 2 & 3: Rotations
+      } else {
+
         if (node === parent.right) {
+          currentRBRotation = "LR Rotation (RB)";
           node = parent;
           rotateLeftRB(node);
+        } else {
+          currentRBRotation = "LL Rotation (RB)";
         }
 
         parent.color = "black";
         grandparent.color = "red";
 
+        rbRecolorCount += 2;
         rbRecoloredNodes.add(parent.value);
         rbRecoloredNodes.add(grandparent.value);
 
         rotateRightRB(grandparent);
       }
-    } 
-    else {
+
+    } else {
       const uncle = grandparent.left;
 
       if (uncle && uncle.color === "red") {
@@ -285,21 +304,26 @@ function fixRBInsert(node) {
         uncle.color = "black";
         grandparent.color = "red";
 
+        rbRecolorCount += 3;
         rbRecoloredNodes.add(parent.value);
         rbRecoloredNodes.add(uncle.value);
         rbRecoloredNodes.add(grandparent.value);
 
         node = grandparent;
-      } 
-      else {
+      } else {
+
         if (node === parent.left) {
+          currentRBRotation = "RL Rotation (RB)";
           node = parent;
           rotateRightRB(node);
+        } else {
+          currentRBRotation = "RR Rotation (RB)";
         }
 
         parent.color = "black";
         grandparent.color = "red";
 
+        rbRecolorCount += 2;
         rbRecoloredNodes.add(parent.value);
         rbRecoloredNodes.add(grandparent.value);
 
@@ -308,11 +332,8 @@ function fixRBInsert(node) {
     }
   }
 
-  rbRoot.color = "black";
-  rbRecoloredNodes.add(rbRoot.value);
+  if (rbRoot) rbRoot.color = "black";
 }
-
-
 
 /**********************
  * SNAPSHOT
@@ -324,31 +345,36 @@ function saveSnapshot(action) {
     rb: structuredClone(rbRoot),
     action,
     rotation: currentRotation,
+    rbRotation: currentRBRotation,
     rotatedNodes: [...currentRotatedNodes],
-    rbRecolored: [...rbRecoloredNodes]   // 🔴 ADD THIS
+    rbRecolored: [...rbRecoloredNodes]
   });
+  step = snapshots.length - 1;
 
   currentRotation = "";
+  currentRBRotation = "";
   currentRotatedNodes.clear();
-  rbRecoloredNodes.clear();   // 🔴 RESET
-  step = snapshots.length - 1;
+  rbRecoloredNodes.clear();
 }
-
-
-
 /**********************
  * INSERT HANDLER
  **********************/
 function insert() {
-  const val = Number(document.getElementById("value").value);
+  const input = document.getElementById("value");
+  const val = Number(input.value);
+
   if (isNaN(val)) return;
 
   bstRoot = insertBST(bstRoot, val);
   avlRoot = insertAVL(avlRoot, val);
-  insertRB(val); // 🔴 NEW
+  insertRB(val);
 
   saveSnapshot(`Inserted ${val}`);
   render();
+
+
+  input.value = "";   
+  updateStats();
 }
 
 
@@ -357,6 +383,57 @@ function getBalanceValue(node) {
   return height(node.left) - height(node.right);
 }
 
+function drawBTree(svg, node, x, y, levelGap = 70, siblingGap = 50) {
+  if (!node) return;
+
+  // draw this node
+  drawBTreeNode(svg, x, y, node.keys);
+
+  // draw children
+  const childCount = node.children.length;
+
+  for (let i = 0; i < childCount; i++) {
+    const child = node.children[i];
+    const childX = x + (i - (childCount - 1) / 2) * siblingGap * (childCount);
+    const childY = y + levelGap;
+
+    // draw line from this node to child
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x);
+    line.setAttribute("y1", y + 15);
+    line.setAttribute("x2", childX);
+    line.setAttribute("y2", childY - 15);
+    svg.appendChild(line);
+
+    drawBTree(svg, child, childX, childY, levelGap, siblingGap * 0.6);
+  }
+}
+function drawBTreeNode(svg, x, y, keys) {
+  const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+  let offset = -(keys.length - 1) * 20;
+
+  keys.forEach((key) => {
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", x + offset);
+    circle.setAttribute("cy", y);
+    circle.setAttribute("r", 18);
+    circle.setAttribute("fill", "#10b981"); // green for B-Tree
+    circle.setAttribute("stroke", "#047857");
+    circle.setAttribute("stroke-width", "2");
+    svg.appendChild(circle);
+
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", x + offset);
+    text.setAttribute("y", y + 5);
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("fill", "white");
+    text.textContent = key;
+    svg.appendChild(text);
+
+    offset += 40;
+  });
+}
 
 /**********************
  * DRAW TREE
@@ -475,26 +552,25 @@ function drawRBNode(svg, x, y, node, recoloredNodes = []) {
 
   c.setAttribute("cx", x);
   c.setAttribute("cy", y);
-  c.setAttribute("r", 20);
+  c.setAttribute("r", 22);
 
-  // 🔴 TRUE RED-BLACK COLORS
   if (node.color === "red") {
-    c.setAttribute("fill", "#b91c1c");   // deep red
+    c.setAttribute("fill", "#dc2626");      // strong red
     c.setAttribute("stroke", "#7f1d1d");
-  } else {
-    c.setAttribute("fill", "#000000");   // pure black
+  }
+
+  else {
+    c.setAttribute("fill", "#000000");      // PURE BLACK
     c.setAttribute("stroke", "#374151");
   }
 
   c.setAttribute("stroke-width", "3");
 
-  // 🔥 Recolor glow animation
   if (recoloredNodes.includes(node.value)) {
-    c.style.filter = "drop-shadow(0 0 12px gold)";
-    c.style.transition = "all 0.6s ease";
+    c.style.filter = "drop-shadow(0 0 15px gold)";
   }
 
-  // Text styling
+  // Text
   t.setAttribute("x", x);
   t.setAttribute("y", y + 5);
   t.setAttribute("text-anchor", "middle");
@@ -506,7 +582,6 @@ function drawRBNode(svg, x, y, node, recoloredNodes = []) {
   svg.appendChild(c);
   svg.appendChild(t);
 }
-
 /**********************
  * ROTATION ARROW (FIXED)
  **********************/
@@ -548,6 +623,33 @@ function drawRotationArrow(type, nodes) {
   setTimeout(() => path.remove(), 2400);
 }
 
+// function showRotationBanner(text) {
+//   const banner = document.createElement("div");
+//   banner.innerText = text;
+
+//   banner.style.position = "fixed";
+//   banner.style.top = "20px";
+//   banner.style.left = "50%";
+//   banner.style.transform = "translateX(-50%)";
+//   banner.style.background = "#f97316";
+//   banner.style.color = "white";
+//   banner.style.padding = "10px 20px";
+//   banner.style.borderRadius = "8px";
+//   banner.style.fontWeight = "bold";
+//   banner.style.boxShadow = "0 5px 20px rgba(0,0,0,0.4)";
+//   banner.style.zIndex = "1000";
+//   banner.style.opacity = "0";
+//   banner.style.transition = "opacity 0.4s ease";
+
+//   document.body.appendChild(banner);
+
+//   setTimeout(() => banner.style.opacity = "1", 50);
+//   setTimeout(() => {
+//     banner.style.opacity = "0";
+//     setTimeout(() => banner.remove(), 400);
+//   }, 2000);
+// }
+
 /**********************
  * RENDER
  **********************/
@@ -563,22 +665,62 @@ function render() {
   const snap = snapshots[step];
   if (!snap) return;
 
-  drawTree(bstSVG, snap.bst, 210, 40, 100, [], false);
+  document.getElementById("avlRotationInfo").innerText =
+  snap.rotation ? snap.rotation : "";
 
-  drawTree(avlSVG, snap.avl, 210, 40, 100, snap.rotatedNodes, true);
+document.getElementById("rbRotationInfo").innerText =
+  snap.rbRotation ? snap.rbRotation : "";
 
-  drawTreeRB(rbSVG, snap.rb, 210, 40, 100, snap.rbRecolored);
+  // Draw Level Guides FIRST (behind nodes)
+drawLevelGuides(bstSVG, snap.bst);
+drawLevelGuides(avlSVG, snap.avl);
+drawLevelGuides(rbSVG, snap.rb);
+
+// Then draw trees
+drawTree(bstSVG, snap.bst, 210, 40, 100, [], false);
+drawTree(avlSVG, snap.avl, 210, 40, 100, snap.rotatedNodes, true);
+drawTreeRB(rbSVG, snap.rb, 210, 40, 100, snap.rbRecolored);
 
 
-
-  if (snap.rotation) {
-    setTimeout(() => drawRotationArrow(snap.rotation, snap.rotatedNodes), 600);
-  }
-
+if (snap.rotation) {
+  setTimeout(() => {
+    drawRotationArrow(snap.rotation, snap.rotatedNodes);
+  }, 600);
+}
   stepInfo.innerText =
     `Step ${step + 1}/${snapshots.length} — ${snap.action}`;
+    function showHeight(svg, root) {
+  const h = getHeight(root);
+
+  const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  text.setAttribute("x", 300);
+  text.setAttribute("y", 20);
+  text.setAttribute("fill", "#38bdf8");
+  text.setAttribute("font-size", "14px");
+  text.textContent = "Height: " + h;
+
+  svg.appendChild(text);
 }
 
+showHeight(bstSVG, snap.bst);
+showHeight(avlSVG, snap.avl);
+showHeight(rbSVG, snap.rb);
+}
+
+
+function getHeight(node) {
+  if (!node) return 0;
+
+  const leftH = node.left ? getHeight(node.left) : 0;
+  const rightH = node.right ? getHeight(node.right) : 0;
+
+  return 1 + Math.max(leftH, rightH);
+}
+
+function getNodeCount(node) {
+    if (!node) return 0;
+    return 1 + getNodeCount(node.left) + getNodeCount(node.right);
+}
 /**********************
  * NAVIGATION
  **********************/
@@ -602,17 +744,248 @@ function prevStep() {
 function resetTrees() {
   bstRoot = null;
   avlRoot = null;
-  rbRoot = null;   // 🔴 ADD THIS
+  rbRoot = null;
 
   snapshots = [];
   prevPositions = {};
   step = -1;
 
+  avlRotationCount = 0;
+  rbRotationCount = 0;
+  rbRecolorCount = 0;
+
   bstSVG.innerHTML = "";
   avlSVG.innerHTML = "";
-  rbSVG.innerHTML = "";  // 🔴 ADD THIS
+  rbSVG.innerHTML = "";
 
   stepInfo.innerText = "Step 0";
+
+  updateStats(); 
+
+  document.getElementById("avlRotationInfo").innerText =
+  snap.rotation ? snap.rotation : "";
+
+document.getElementById("rbRotationInfo").innerText =
+  snap.rbRotation ? snap.rbRotation : "";
+}
+function showInfo(type) {
+  const panel = document.getElementById("infoPanel");
+
+  if (type === "bst") {
+    panel.innerHTML = `
+      <h3>Binary Search Tree (BST)</h3>
+      <p><b>Description:</b> A binary tree where left child < parent < right child.</p>
+      <p><b>Time Complexity:</b></p>
+      <ul>
+        <li>Search: O(h)</li>
+        <li>Insert: O(h)</li>
+        <li>Delete: O(h)</li>
+      </ul>
+      <p><b>Worst Case:</b> O(n) (Skewed Tree)</p>
+      <p><b>Best Case:</b> O(log n)</p>
+      <p><b>Balancing:</b> ❌ Not Self-Balancing</p>
+    `;
+  }
+
+  if (type === "avl") {
+    panel.innerHTML = `
+      <h3>AVL Tree</h3>
+      <p><b>Description:</b> Self-balancing BST using balance factor.</p>
+      <p><b>Balance Condition:</b> |BF| ≤ 1</p>
+      <p><b>Time Complexity:</b></p>
+      <ul>
+        <li>Search: O(log n)</li>
+        <li>Insert: O(log n)</li>
+        <li>Delete: O(log n)</li>
+      </ul>
+      <p><b>Rotations:</b> LL, RR, LR, RL</p>
+      <p><b>Strictly Balanced:</b> ✅ Yes</p>
+    `;
+  }
+
+  if (type === "rb") {
+    panel.innerHTML = `
+      <h3>Red-Black Tree</h3>
+      <p><b>Description:</b> Self-balancing BST using color properties.</p>
+      <p><b>Properties:</b></p>
+      <ul>
+        <li>Root is always black</li>
+        <li>No two red nodes adjacent</li>
+        <li>Same black height on all paths</li>
+      </ul>
+      <p><b>Time Complexity:</b></p>
+      <ul>
+        <li>Search: O(log n)</li>
+        <li>Insert: O(log n)</li>
+        <li>Delete: O(log n)</li>
+      </ul>
+      <p><b>Loosely Balanced:</b> ✅ Yes</p>
+    `;
+  }
+
+  panel.style.display = "block";
 }
 
- 
+function toggleMenu() {
+    const menu = document.getElementById("treeOptions");
+    menu.style.display =
+        menu.style.display === "block" ? "none" : "block";
+}
+
+function openTree(page) {
+    window.location.href = page;
+}
+
+
+
+function initChart() {
+    const ctx = document.getElementById("statsChart").getContext("2d");
+
+    statsChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: ["Height", "Rotations", "Recolorings"],
+            datasets: [
+                {
+                    label: "Binary Search Tree",
+                    data: [0, 0, 0],
+                    backgroundColor: "rgba(10, 245, 14, 0.7)",
+                    categoryPercentage: 0.8,
+                    barPercentage: 0.8
+                },
+                {
+                    label: "AVL Tree",
+                    data: [0, 0, 0],
+                    backgroundColor: "rgba(52, 127, 247, 0.7)",
+                    categoryPercentage: 0.8,
+                    barPercentage: 0.8
+                },
+                {
+                    label: "Red-Black Tree",
+                    data: [0, 0, 0],
+                    backgroundColor: "rgba(244, 24, 24, 0.7)",
+                    categoryPercentage: 0.8,
+                    barPercentage: 0.8
+                }
+
+            ]
+            
+        },
+        options: {
+            responsive: true,
+            animation: {
+                duration: 800
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+          
+        }
+    });
+}
+
+function updateStats() {
+    if (!statsChart) return;
+
+    const avlHeight = getHeight(avlRoot);
+    const rbHeight = getHeight(rbRoot);
+    const bstHeight = getHeight(bstRoot)
+
+    const avlNodes = getNodeCount(avlRoot);
+    const rbNodes = getNodeCount(rbRoot);
+    const bstNodes = getNodeCount(bstRoot);
+
+    const avlTheoretical = avlNodes > 0 ? Math.log2(avlNodes).toFixed(2) : 0;
+    const rbTheoretical = rbNodes > 0 ? Math.log2(rbNodes).toFixed(2) : 0;
+    const bstTheoretical = bstNodes > 0 ? Math.log2(bstNodes).toFixed(2) : 0;
+
+    statsChart.data.labels = [
+        "Height",
+        "Complexities",
+        "Rotations",
+        "Recolorings"
+    ];
+
+// BST
+statsChart.data.datasets[0].data = [
+    bstHeight,
+    bstTheoretical,
+    0,
+    0
+];
+
+// AVL
+statsChart.data.datasets[1].data = [
+    avlHeight,
+    avlTheoretical,
+    avlRotationCount,
+    0
+];
+
+// RB
+statsChart.data.datasets[2].data = [
+    rbHeight,
+    rbTheoretical,
+    rbRotationCount,
+    rbRecolorCount
+];
+
+    statsChart.update();
+}
+
+function toggleStatsPanel() {
+    const panel = document.getElementById("statsContainer");
+
+    if (panel.style.display === "none") {
+        panel.style.display = "block";
+
+        setTimeout(() => {
+            if (!statsChart) {
+                initChart();
+            } else {
+                statsChart.resize();
+            }
+            updateStats();
+        }, 200);
+
+    } else {
+        panel.style.display = "none";
+    }
+}
+
+function drawLevelGuides(svg, root) {
+  if (!root) return;
+
+  const height = getHeight(root);
+  const levelGap = 70;
+  const startY = 40;
+
+  for (let i = 0; i < height; i++) {
+    const y = startY + i * levelGap;
+
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", 0);
+    line.setAttribute("y1", y);
+    line.setAttribute("x2", svg.clientWidth);
+    line.setAttribute("y2", y);
+    line.setAttribute("stroke", "#cbd5e1");
+    line.setAttribute("stroke-width", "1");
+    line.setAttribute("stroke-dasharray", "4,8");
+    line.setAttribute("opacity", "0.35");   // 🔥 more subtle
+    svg.appendChild(line);
+
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", 8);
+    text.setAttribute("y", y - 6);
+    text.setAttribute("fill", "#94a3b8");
+    text.setAttribute("font-size", "10px");
+    text.setAttribute("font-family", "Inter, sans-serif");
+    text.setAttribute("opacity", "0.4");   // 
+    text.textContent = i; 
+
+    svg.appendChild(text);
+  }
+}
+
